@@ -13,7 +13,8 @@ public class PipelineController implements PipelineControllerInterface {
         if(pipeline == null) {
             throw new IOException("No pipeline with id'" + pipelineId + "'");
         }
-        pipeline.sendNext(null, data);
+
+        pipeline.sendToIndex(data, 0);
     }
 
     @Override

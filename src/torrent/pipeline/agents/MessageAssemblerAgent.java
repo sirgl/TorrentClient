@@ -1,5 +1,6 @@
 package torrent.pipeline.agents;
 
+import torrent.pipeline.AgentContext;
 import torrent.pipeline.PipelineInterface;
 
 import java.nio.ByteBuffer;
@@ -22,10 +23,10 @@ public class MessageAssemblerAgent implements AgentInterface {
     }
 
     /**
-     * @param data - must be flipped buffer that contains part of PWP message
+     * @param data must be flipped buffer that contains part of PWP message
      */
     @Override
-    public void handle(Object data) {
+    public void handle(AgentContext context, Object data) {
         ByteBuffer buffer = (ByteBuffer) data;
         if (sizeBuffer.hasRemaining()) {
             int neededCount = sizeBuffer.limit() - sizeBuffer.position();
@@ -48,7 +49,7 @@ public class MessageAssemblerAgent implements AgentInterface {
             dataBuffer.put(internalBuffer, 0, min);
             if (!dataBuffer.hasRemaining()) {
                 dataBuffer.flip();
-                pipeline.sendNext(this, dataBuffer);
+                context.sendNext(dataBuffer);
             }
         }
     }

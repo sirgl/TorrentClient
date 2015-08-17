@@ -1,5 +1,7 @@
 package torrent.pipeline.agents;
 
+import torrent.pipeline.AgentContext;
+
 public class OutputAgent implements AgentInterface {
     private Object result;
 
@@ -8,7 +10,8 @@ public class OutputAgent implements AgentInterface {
     }
 
     @Override
-    public void handle(Object data) {
+    public void handle(AgentContext context, Object data) {
         result = data;
+        context.sendNext(data);
     }
 }
