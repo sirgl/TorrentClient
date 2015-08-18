@@ -2,7 +2,11 @@ package torrent.pipeline.agents.pwm;
 
 import torrent.communication.PeerManager;
 import torrent.pipeline.AgentContext;
+import torrent.pipeline.Pipeline;
+import torrent.pipeline.PipelineController;
+import torrent.pipeline.PipelineImpl;
 import torrent.pipeline.agents.Agent;
+import torrent.pipeline.agents.general.ByteBufferLoggerAgent;
 import torrent.queue.QueueHandler;
 import torrent.queue.TaskBuilder;
 
@@ -10,6 +14,9 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 
+/**
+ * Ending
+ */
 public class HandshakeAgent implements Agent {
     public static final int EXTENSIONS_LENGTH = 8;
     public static final int INFO_HASH_LENGTH = 20;
@@ -19,16 +26,24 @@ public class HandshakeAgent implements Agent {
 
 
     private final QueueHandler queueHandler;
-    private final PeerManager peerManager;
     private final byte[] ourInfoHash;
     private final TaskBuilder taskBuilder;
+    private final PipelineController pipelineController;
+    private final MessageAssemblerAgent previousAgent;
 
-    public HandshakeAgent(QueueHandler queueHandler, PeerManager peerManager,
-                          TaskBuilder taskBuilder, byte[] ourInfoHash) {
+    /**
+     * @param bufferingAgent previous agent that has a buffer(only previous buffer will be transmitted to new pipeline)
+     */
+    public HandshakeAgent(QueueHandler queueHandler,
+                          TaskBuilder taskBuilder,
+                          byte[] ourInfoHash,
+                          PipelineController pipelineController,
+                          MessageAssemblerAgent bufferingAgent) {
         this.queueHandler = queueHandler;
-        this.peerManager = peerManager;
         this.ourInfoHash = ourInfoHash;
         this.taskBuilder = taskBuilder;
+        this.pipelineController = pipelineController;
+        this.previousAgent = bufferingAgent;
     }
 
     /**
@@ -59,6 +74,19 @@ public class HandshakeAgent implements Agent {
         }
         byte[] peerName = new byte[PEER_NAME_LENGTH];
         incomeBuffer.get(peerName);
-        peerManager.registerPeer(id, ByteBuffer.wrap(peerName));
+
+
+        queueHandler.addTask(taskBuilder.getPeerRegistrationRequest(id, ByteBuffer.wrap(peerName)));
+        replacePipeline(id);
     }
+
+    private void replacePipeline(long id) {
+        Pipeline pipeline = new PipelineImpl();
+        pipeline.addAgent(new ByteBufferLoggerAgent(pipeline))
+                .addAgent(new MessageAssemblerAgent(pipeline));
+        //TODO add message parser agent
+        pipelineController.replacePipeline(pipeline, id);
+        pipelineController.send(previousAgent.getInternalBuffer(), id);
+    }
+
 }

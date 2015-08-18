@@ -8,17 +8,17 @@ public class PipelineControllerImpl implements PipelineController {
     private final Map<Long, Pipeline> pipelineMap = new HashMap<>();
 
     @Override
-    public void send(Object data, long pipelineId) throws IOException {
+    public void send(Object data, long pipelineId)  {
         Pipeline pipeline = pipelineMap.get(pipelineId);
         if(pipeline == null) {
-            throw new IOException("No pipeline with id'" + pipelineId + "'");
+            throw new WrongPipelineIdException(pipelineId);
         }
 
         pipeline.sendToIndex(data, 0);
     }
 
     @Override
-    public void addPipeline(Pipeline pipeline, long pipelineId) throws PipelineCreationException{
+    public void addPipeline(Pipeline pipeline, long pipelineId) throws PipelineCreationException {
         Pipeline mapInstance = pipelineMap.get(pipelineId);
         if (mapInstance != null) {
             throw new PipelineCreationException("Pipeline with id '" + pipelineId + "' already exists");

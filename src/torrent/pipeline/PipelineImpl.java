@@ -31,6 +31,7 @@ public class PipelineImpl implements Pipeline {
             throw new IdReassignmentException();
         }
         this.id = id;
+        idAssigned = true;
     }
 
     @Override

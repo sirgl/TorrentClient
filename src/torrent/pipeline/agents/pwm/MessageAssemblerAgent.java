@@ -6,6 +6,8 @@ import torrent.pipeline.agents.Agent;
 
 import java.nio.ByteBuffer;
 
+import static torrent.tools.transferAsMuchAsPossible;
+
 /**
  * Agent for assembling peer wire protocol(PWP) messages.
  * It compiles solid message from many buffers.
@@ -19,6 +21,9 @@ public class MessageAssemblerAgent implements Agent {
     private final int size;
     private final byte[] internalBuffer = new byte[INTERNAL_BUFFER_CAPACITY];
     private ByteBuffer dataBuffer;
+    private ByteBuffer buffer;
+
+    private boolean stopped = false;
 
     /**
      * Creates agent, that will assemble message of size of first int in buffer
@@ -37,38 +42,50 @@ public class MessageAssemblerAgent implements Agent {
         this.size = size;
     }
 
+    public ByteBuffer getInternalBuffer() {
+        return buffer;
+    }
+
+    public void stop() {
+        stopped = true;
+    }
+
     /**
      * @param data must be flipped buffer that contains part of PWP message
      */
     @Override
     public void handle(AgentContext context, Object data) {
-        ByteBuffer buffer = (ByteBuffer) data;
-        if(size == 0) {
-            if (sizeBuffer.hasRemaining()) {
-                int neededCount = sizeBuffer.limit() - sizeBuffer.position();
+        buffer = (ByteBuffer) data;
+        while(buffer.hasRemaining() && !stopped) {
+            if (size == 0) {
+                if (sizeBuffer.hasRemaining()) {
+                    int neededCount = sizeBuffer.limit() - sizeBuffer.position();
+                    int availableCount = buffer.limit() - buffer.position();
+                    int min = Math.min(Math.min(neededCount, availableCount), INTERNAL_BUFFER_CAPACITY);
+                    buffer.get(internalBuffer, 0, min);
+                    sizeBuffer.put(internalBuffer, 0, min);
+                    if (!sizeBuffer.hasRemaining()) {
+                        sizeBuffer.flip();
+                        dataBuffer = ByteBuffer.allocate(sizeBuffer.getInt());
+                    } else {
+                        return;
+                    }
+                }
+            } else {
+                if (dataBuffer == null) {
+                    dataBuffer = ByteBuffer.allocate(size);
+                }
+            }
+            if (dataBuffer.hasRemaining()) {
+                int neededCount = dataBuffer.limit() - dataBuffer.position();
                 int availableCount = buffer.limit() - buffer.position();
                 int min = Math.min(Math.min(neededCount, availableCount), INTERNAL_BUFFER_CAPACITY);
                 buffer.get(internalBuffer, 0, min);
-                sizeBuffer.put(internalBuffer, 0, min);
-                if (!sizeBuffer.hasRemaining()) {
-                    sizeBuffer.flip();
-                    dataBuffer = ByteBuffer.allocate(sizeBuffer.getInt());
-                } else {
-                    return;
+                dataBuffer.put(internalBuffer, 0, min);
+                if (!dataBuffer.hasRemaining()) {
+                    dataBuffer.flip();
+                    context.sendNext(dataBuffer);
                 }
-            }
-        } else {
-            dataBuffer = ByteBuffer.allocate(size);
-        }
-        if (dataBuffer.hasRemaining()) {
-            int neededCount = dataBuffer.limit() - dataBuffer.position();
-            int availableCount = buffer.limit() - buffer.position();
-            int min = Math.min(Math.min(neededCount, availableCount), INTERNAL_BUFFER_CAPACITY);
-            buffer.get(internalBuffer, 0, min);
-            dataBuffer.put(internalBuffer, 0, min);
-            if (!dataBuffer.hasRemaining()) {
-                dataBuffer.flip();
-                context.sendNext(dataBuffer);
             }
         }
     }

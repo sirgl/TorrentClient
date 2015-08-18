@@ -6,17 +6,16 @@ import java.util.List;
 
 public class Torrent {
     private final String announce;
+    //info
+    private final int length;
+    private final String name;
+    private final int pieceLength;
+    private final byte[] pieces;
     private List<String> announceList;
     private String comment;
     private String createdBy;
     private String creationDate;
-
-    //info
-    private final int length;
     private byte[] md5;
-    private final String name;
-    private final int pieceLength;
-    private final byte[] pieces;
 
     public Torrent(@NotNull String announce,
                    int length,
@@ -48,5 +47,9 @@ public class Torrent {
 
     public void setMd5(byte[] md5) {
         this.md5 = md5;
+    }
+
+    public byte[] getInfoHash() {
+        return new byte[20];
     }
 }
