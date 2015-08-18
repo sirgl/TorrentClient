@@ -2,6 +2,6 @@ package torrent;
 
 import java.io.IOException;
 
-public interface TorrentProviderInteface {
+public interface TorrentProvider {
     Torrent getTorrent() throws IOException, BadTorrentException;
 }

@@ -1,25 +1,26 @@
-package torrent.pipeline.agents;
+package torrent.pipeline.agents.pwm;
 
 import junit.framework.TestCase;
 import org.junit.Assert;
-import torrent.pipeline.Pipeline;
+import torrent.pipeline.PipelineImpl;
+import torrent.pipeline.PipelineControllerImpl;
 import torrent.pipeline.PipelineController;
-import torrent.pipeline.PipelineControllerInterface;
-import torrent.pipeline.PipelineInterface;
+import torrent.pipeline.Pipeline;
+import torrent.pipeline.agents.general.OutputAgent;
 
 import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 public class MessageAssemblerAgentTest extends TestCase {
-    private PipelineInterface pipeline;
-    private final PipelineControllerInterface pipelineController = new PipelineController();
+    private Pipeline pipeline;
+    private final PipelineController pipelineController = new PipelineControllerImpl();
     private final OutputAgent exitAgent = new OutputAgent();
 
 
     @Override
     public void setUp() throws Exception {
-        pipeline = new Pipeline();
+        pipeline = new PipelineImpl();
         pipeline.addAgent(new MessageAssemblerAgent(pipeline))
                 .addAgent(exitAgent);
         pipelineController.replacePipeline(pipeline, 0);

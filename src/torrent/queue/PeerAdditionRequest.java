@@ -1,20 +1,21 @@
 package torrent.queue;
 
-import torrent.communication.SendServiceInterface;
+import torrent.communication.CommunicationController;
+import torrent.communication.SendService;
 
-import java.net.Inet4Address;
+import java.net.InetAddress;
 
 public class PeerAdditionRequest implements Runnable {
-    private final Inet4Address address;
-    private final SendServiceInterface sendService;
+    private final InetAddress address;
+    private final CommunicationController communicationController;
 
-    public PeerAdditionRequest(Inet4Address address, SendServiceInterface sendService) {
+    PeerAdditionRequest(InetAddress address, CommunicationController communicationController) {
         this.address = address;
-        this.sendService = sendService;
+        this.communicationController = communicationController;
     }
 
     @Override
     public void run() {
-        sendService.addNewPeer(address);
+        communicationController.addNewPeer(address);
     }
 }

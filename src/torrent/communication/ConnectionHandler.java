@@ -1,10 +1,10 @@
 package torrent.communication;
 
-import torrent.pipeline.Pipeline;
+import torrent.pipeline.PipelineImpl;
+import torrent.pipeline.PipelineControllerImpl;
 import torrent.pipeline.PipelineController;
-import torrent.pipeline.PipelineControllerInterface;
 import torrent.pipeline.PipelineCreationException;
-import torrent.pipeline.agents.ByteBufferLoggerAgent;
+import torrent.pipeline.agents.general.ByteBufferLoggerAgent;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -18,7 +18,7 @@ import java.util.Iterator;
 
 public class ConnectionHandler implements Runnable {
     /**
-     * @implNote Must be greater, than 64
+     * @implNote Must be >69 (length of handshake message)
      */
     private static final int BUFFER_CAPACITY = 1024;
     private static long idCounter = 0;
@@ -26,14 +26,14 @@ public class ConnectionHandler implements Runnable {
     private final ServerSocketChannel serverSocketChannel;
     private final ByteBuffer buffer;
     private final InetSocketAddress serverPort;
-    private final PeerManagerInterface peerManager;
+    private final PeerManager peerManager;
     private final CommunicationService communicationService;
 
-    private final PipelineControllerInterface incomingPipelineController = new PipelineController();
-    private final PipelineControllerInterface outgoingPipelineController = new PipelineController();
+    private final PipelineController incomingPipelineController = new PipelineControllerImpl();
+    private final PipelineController outgoingPipelineController = new PipelineControllerImpl();
 
 
-    public ConnectionHandler(InetSocketAddress serverPort, PeerManagerInterface manager, CommunicationService communicationService) throws IOException {
+    public ConnectionHandler(InetSocketAddress serverPort, PeerManager manager, CommunicationService communicationService) throws IOException {
         this.serverPort = serverPort;
         this.peerManager = manager;
         this.communicationService = communicationService;
@@ -67,6 +67,7 @@ public class ConnectionHandler implements Runnable {
 
                     }
                     catch (IOException e) {
+                        //TODO replace this with delRequest
                         long id = (Long) selectionKey.attachment();
                         peerManager.removePeer(id);
                         removePipelines(id);
@@ -115,10 +116,10 @@ public class ConnectionHandler implements Runnable {
     public long addPeerToPipeline() throws IOException {
         try {
             long id = getNextId();
-            Pipeline pipeline = new Pipeline();
+            PipelineImpl pipeline = new PipelineImpl();
             pipeline.addAgent(new ByteBufferLoggerAgent(pipeline));
             incomingPipelineController.addPipeline(pipeline, id);
-            outgoingPipelineController.addPipeline(new Pipeline(), id);
+            outgoingPipelineController.addPipeline(new PipelineImpl(), id);
             return id;
         } catch (PipelineCreationException e) {
             throw new IOException(e);

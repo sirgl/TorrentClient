@@ -1,11 +1,12 @@
 package torrent.communication;
 
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 
-public class CommunicationService implements SendServiceInterface {
+public class CommunicationService implements SendService, CommunicationController {
 
     @Override
-    public void sendMessage(byte[] message, String peerId) {
+    public void sendMessage(byte[] message, ByteBuffer peerId) {
 
     }
 
@@ -15,6 +16,11 @@ public class CommunicationService implements SendServiceInterface {
      */
     @Override
     public void addNewPeer(InetAddress address) {
+
+    }
+
+    @Override
+    public void deletePeer(long peerId) {
 
     }
 

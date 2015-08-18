@@ -1,7 +1,8 @@
-package torrent.pipeline.agents;
+package torrent.pipeline.agents.general;
 
 import torrent.pipeline.AgentContext;
-import torrent.pipeline.PipelineInterface;
+import torrent.pipeline.Pipeline;
+import torrent.pipeline.agents.Agent;
 
 import java.nio.ByteBuffer;
 
@@ -9,10 +10,10 @@ import java.nio.ByteBuffer;
 /**
  * Agent for logging raw binary data in form of ByteBuffer
  */
-public class ByteBufferLoggerAgent implements AgentInterface {
-    private final PipelineInterface pipeline;
+public class ByteBufferLoggerAgent implements Agent {
+    private final Pipeline pipeline;
 
-    public ByteBufferLoggerAgent(PipelineInterface pipeline) {
+    public ByteBufferLoggerAgent(Pipeline pipeline) {
         this.pipeline = pipeline;
     }
 

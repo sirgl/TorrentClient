@@ -1,25 +1,27 @@
 package torrent.pipeline;
 
-import torrent.pipeline.agents.AgentInterface;
-
-import java.util.Iterator;
+import torrent.pipeline.agents.Agent;
 
 public class AgentContext {
-    private final PipelineInterface pipeline;
+    private final Pipeline pipeline;
     private final int index;
-    private final AgentInterface agentInterface;
+    private final Agent agent;
 
-    public AgentContext(PipelineInterface pipeline, int index, AgentInterface agentInterface) {
+    public AgentContext(Pipeline pipeline, int index, Agent agent) {
         this.pipeline = pipeline;
         this.index = index;
-        this.agentInterface = agentInterface;
+        this.agent = agent;
     }
 
     public void sendNext(Object data) {
         pipeline.sendToIndex(data, index + 1);
     }
 
-    AgentInterface getAgent(){
-        return agentInterface;
+    Agent getAgent(){
+        return agent;
+    }
+
+    public long getId() {
+        return pipeline.getId();
     }
 }

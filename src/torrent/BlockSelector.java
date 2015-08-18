@@ -1,5 +1,5 @@
 package torrent;
 
-public interface BlockSelectorInterface {
+public interface BlockSelector {
     int getNextIdToDownload();
 }

@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class TorrentParser implements TorrentProviderInteface {
+public class TorrentParser implements TorrentProvider {
     private final BencodeParser parser;
 
     public TorrentParser(String torrentPath) throws FileNotFoundException {
