@@ -14,7 +14,7 @@ public class CommunicationService implements CommunicationController {
 
 
     /**
-     * @implNote To avoid deadlock it must be used only by queue handler thread
+     * To avoid deadlock it must be used only by queue handler thread
      */
     @Override
     public void addNewPeer(InetSocketAddress address) throws IOException {
@@ -22,7 +22,7 @@ public class CommunicationService implements CommunicationController {
     }
 
     /**
-     * @implNote To avoid deadlock it must be used only by queue handler thread
+     * To avoid deadlock it must be used only by queue handler thread
      */
     @Override
     public void deletePeer(long peerId) {

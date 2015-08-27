@@ -8,7 +8,7 @@ public interface Pipeline {
     void sendToIndex(Object data, int index);
 
     /**
-     *  @apiNote uses by PipelineController to assign ids, don't use it together
+     *  uses by PipelineController to assign ids, don't use it together
      */
     void setId(long id);
 }

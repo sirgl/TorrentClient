@@ -29,7 +29,6 @@ public class ConnectionHandler implements Runnable, SendService {
     private final ServerSocketChannel serverSocketChannel;
     private final ByteBuffer buffer;
     private final InetSocketAddress serverPort;
-    private final PeerManager peerManager;
     private final TaskBuilder taskBuilder;
     private final QueueHandler queueHandler;
 
@@ -42,11 +41,9 @@ public class ConnectionHandler implements Runnable, SendService {
 
 
     public ConnectionHandler(InetSocketAddress serverPort,
-                             PeerManager manager,
                              TaskBuilder taskBuilder,
                              QueueHandler queueHandler, byte[] infoHash) throws IOException {
         this.serverPort = serverPort;
-        this.peerManager = manager;
         this.taskBuilder = taskBuilder;
         this.queueHandler = queueHandler;
         this.infoHash = infoHash;
@@ -108,9 +105,6 @@ public class ConnectionHandler implements Runnable, SendService {
         idMap.get(id).write(buffer);
     }
 
-    /**
-     * As the selector has no synchronization
-     */
     private void handleQueue() {
         while (!taskQueue.isEmpty()) {
             taskQueue.remove().run();
@@ -143,7 +137,7 @@ public class ConnectionHandler implements Runnable, SendService {
     }
 
     private long getNextId() {
-        while (peerManager.hasPeer(idCounter)) {
+        while(idMap.get(idCounter) != null) {
             idCounter++;
         }
         return idCounter;
@@ -177,7 +171,7 @@ public class ConnectionHandler implements Runnable, SendService {
 
     /**
      * Uses to send data through outgoing pipeline
-     *  @implNote  Can be used only by queue handler to avoid deadlock
+     * Can be used only by queue handler to avoid deadlock
      */
     @Override
     public void sendMessage(byte[] message, long peerId) {

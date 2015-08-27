@@ -14,7 +14,7 @@ public class SendTest {
         PeerManagerImpl peerManager = new PeerManagerImpl();
         TaskBuilderImpl taskBuilder = new TaskBuilderImpl(peerManager);
         QueueHandler queueHandler = new QueueHandlerImpl();
-        ConnectionHandler connectionHandler = new ConnectionHandler(new InetSocketAddress(4444), peerManager,
+        ConnectionHandler connectionHandler = new ConnectionHandler(new InetSocketAddress(4444),
                 taskBuilder, queueHandler, new byte[20]);
         CommunicationService communicationService = new CommunicationService(connectionHandler);
         taskBuilder.setSendService(connectionHandler);

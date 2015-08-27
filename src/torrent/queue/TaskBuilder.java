@@ -11,5 +11,5 @@ public interface TaskBuilder {
 
     PeerCreationRequest getPeerCreationRequest(long id);
 
-
+    MessageSendRequest getMessageSendRequest(long id, byte[] message);
 }

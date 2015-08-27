@@ -42,4 +42,9 @@ public class TaskBuilderImpl implements TaskBuilder {
     public PeerCreationRequest getPeerCreationRequest(long id) {
         return new PeerCreationRequest(id, peerManager);
     }
+
+    @Override
+    public MessageSendRequest getMessageSendRequest(long id, byte[] message) {
+        return new MessageSendRequest(sendService, message, id);
+    }
 }
