@@ -1,15 +1,13 @@
 package torrent;
 
-import java.nio.ByteBuffer;
-
 public class Peer {
-    private ByteBuffer name;
+    private byte[] name;
 
-    public ByteBuffer getName() {
+    public byte[] getName() {
         return name;
     }
 
-    public void setName(ByteBuffer name) {
+    public void setName(byte[] name) {
         this.name = name;
     }
 }

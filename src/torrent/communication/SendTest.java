@@ -2,25 +2,25 @@ package torrent.communication;
 
 import torrent.queue.QueueHandler;
 import torrent.queue.QueueHandlerImpl;
-import torrent.queue.TaskBuilder;
 import torrent.queue.TaskBuilderImpl;
 
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 public class SendTest {
     public static void main(String[] args) throws IOException {
-        CommunicationService communicationService = new CommunicationService();
         PeerManagerImpl peerManager = new PeerManagerImpl();
-        TaskBuilder taskBuilder = new TaskBuilderImpl(communicationService, communicationService, peerManager);
+        TaskBuilderImpl taskBuilder = new TaskBuilderImpl(peerManager);
         QueueHandler queueHandler = new QueueHandlerImpl();
-        ConnectionHandler connectionHandler = new ConnectionHandler(new InetSocketAddress(4444), peerManager, communicationService, taskBuilder, queueHandler, new byte[20]);
+        ConnectionHandler connectionHandler = new ConnectionHandler(new InetSocketAddress(4444), peerManager,
+                taskBuilder, queueHandler, new byte[20]);
+        CommunicationService communicationService = new CommunicationService(connectionHandler);
+        taskBuilder.setSendService(connectionHandler);
+        taskBuilder.setCommunicationController(communicationService);
         new Thread(connectionHandler).start();
+        new Thread((Runnable) queueHandler).start();
 
         new Thread(() -> {
             try {
@@ -35,8 +35,8 @@ public class SendTest {
                 buffer.flip();
                 channel.write(buffer);
                 buffer.clear();
-                buffer.putInt(1);
                 buffer.put((byte) 5);
+                buffer.putInt(5);
                 buffer.flip();
                 channel.write(buffer);
             } catch (IOException e) {

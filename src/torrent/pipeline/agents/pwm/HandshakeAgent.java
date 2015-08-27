@@ -1,12 +1,10 @@
 package torrent.pipeline.agents.pwm;
 
-import torrent.communication.PeerManager;
-import torrent.pipeline.AgentContext;
+import torrent.pipeline.PipelineContext;
 import torrent.pipeline.Pipeline;
 import torrent.pipeline.PipelineController;
 import torrent.pipeline.PipelineImpl;
 import torrent.pipeline.agents.Agent;
-import torrent.pipeline.agents.general.ByteBufferLoggerAgent;
 import torrent.queue.QueueHandler;
 import torrent.queue.TaskBuilder;
 
@@ -50,7 +48,7 @@ public class HandshakeAgent implements Agent {
      * @param data buffer exactly of handshake message size
      */
     @Override
-    public void handle(AgentContext context, Object data) {
+    public void handle(PipelineContext context, Object data) {
         long id = context.getId();
         ByteBuffer incomeBuffer = (ByteBuffer) data;
         byte protocolNameSize = incomeBuffer.get();
@@ -76,13 +74,13 @@ public class HandshakeAgent implements Agent {
         incomeBuffer.get(peerName);
 
 
-        queueHandler.addTask(taskBuilder.getPeerRegistrationRequest(id, ByteBuffer.wrap(peerName)));
+        queueHandler.addTask(taskBuilder.getPeerRegistrationRequest(id, peerName));
         replacePipeline(id);
     }
 
     private void replacePipeline(long id) {
         Pipeline pipeline = new PipelineImpl();
-        pipeline.addAgent(new ByteBufferLoggerAgent(pipeline))
+        pipeline.addAgent(new MessageLoggingAgent(32))
                 .addAgent(new MessageAssemblerAgent(pipeline));
         //TODO add message parser agent
         pipelineController.replacePipeline(pipeline, id);

@@ -1,7 +1,7 @@
 package torrent.pipeline.agents;
 
-import torrent.pipeline.AgentContext;
+import torrent.pipeline.PipelineContext;
 
 public interface Agent {
-    void handle(AgentContext context, Object data);
+    void handle(PipelineContext context, Object data);
 }

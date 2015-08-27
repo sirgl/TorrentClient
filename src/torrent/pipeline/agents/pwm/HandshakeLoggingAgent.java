@@ -1,6 +1,6 @@
 package torrent.pipeline.agents.pwm;
 
-import torrent.pipeline.AgentContext;
+import torrent.pipeline.PipelineContext;
 import torrent.pipeline.agents.Agent;
 
 import java.nio.ByteBuffer;
@@ -13,7 +13,7 @@ public class HandshakeLoggingAgent implements Agent {
     private static final byte PROTOCOL_NAME_LENGTH = 19;
 
     @Override
-    public void handle(AgentContext context, Object data) {
+    public void handle(PipelineContext context, Object data) {
         ByteBuffer incomeBuffer = (ByteBuffer) data;
         byte protocolNameSize = incomeBuffer.get();
         byte[] protocolName = new byte[PROTOCOL_NAME_LENGTH];

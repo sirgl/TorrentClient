@@ -1,9 +1,7 @@
 package torrent.communication;
 
-import torrent.pipeline.PipelineImpl;
-import torrent.pipeline.PipelineControllerImpl;
-import torrent.pipeline.PipelineController;
-import torrent.pipeline.PipelineCreationException;
+import torrent.pipeline.*;
+import torrent.pipeline.agents.general.SendAgent;
 import torrent.pipeline.agents.pwm.HandshakeAgent;
 import torrent.pipeline.agents.pwm.HandshakeLoggingAgent;
 import torrent.pipeline.agents.pwm.MessageAssemblerAgent;
@@ -18,22 +16,20 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.Iterator;
+import java.util.*;
 
-public class ConnectionHandler implements Runnable {
+public class ConnectionHandler implements Runnable, SendService {
+    public static final int HANDSHAKE_SIZE = 68;
     /**
      * @implNote Must be >69 (length of handshake message)
      */
     private static final int BUFFER_CAPACITY = 1024;
-    public static final int HANDSHAKE_SIZE = 68;
-
     private static long idCounter = 0;
     private final Selector selector;
     private final ServerSocketChannel serverSocketChannel;
     private final ByteBuffer buffer;
     private final InetSocketAddress serverPort;
     private final PeerManager peerManager;
-    private final CommunicationService communicationService;
     private final TaskBuilder taskBuilder;
     private final QueueHandler queueHandler;
 
@@ -41,15 +37,16 @@ public class ConnectionHandler implements Runnable {
     private final PipelineController outgoingPipelineController = new PipelineControllerImpl();
     private final byte[] infoHash;
 
+    private final Queue<Runnable> taskQueue = new ArrayDeque<>();
+    private final Map<Long, SocketChannel> idMap = new HashMap<>();
+
 
     public ConnectionHandler(InetSocketAddress serverPort,
                              PeerManager manager,
-                             CommunicationService communicationService,
                              TaskBuilder taskBuilder,
                              QueueHandler queueHandler, byte[] infoHash) throws IOException {
         this.serverPort = serverPort;
         this.peerManager = manager;
-        this.communicationService = communicationService;
         this.taskBuilder = taskBuilder;
         this.queueHandler = queueHandler;
         this.infoHash = infoHash;
@@ -57,6 +54,11 @@ public class ConnectionHandler implements Runnable {
         serverSocketChannel = ServerSocketChannel.open();
         buffer = ByteBuffer.allocateDirect(BUFFER_CAPACITY);
         //TODO run HeartbeatService
+    }
+
+    public void addTask(Runnable task) {
+        taskQueue.add(task);
+        selector.wakeup();
     }
 
     @Override
@@ -67,6 +69,7 @@ public class ConnectionHandler implements Runnable {
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
             while (!Thread.interrupted()) {
+                handleQueue();
                 int selectedCount = selector.select();
                 if (selectedCount == 0) {
                     continue;
@@ -78,42 +81,65 @@ public class ConnectionHandler implements Runnable {
                             accept(((ServerSocketChannel) selectionKey.channel()).accept());
                         }
                         if (selectionKey.isReadable()) {
-                            read((SocketChannel) selectionKey.channel(), (Long)selectionKey.attachment());
+                            read((SocketChannel) selectionKey.channel(), (Long) selectionKey.attachment());
                         }
-                    }
-                    catch (IOException e) {
+                    } catch (IOException e) {
                         long id = (Long) selectionKey.attachment();
+                        selectionKey.cancel();
+                        removePipelines(id);
                         queueHandler.addTask(taskBuilder.getPeerDeletionRequest(id, e.getMessage()));
-                    }
-                    finally {
+                    } finally {
                         iterator.remove();
                     }
                 }
             }
         } catch (IOException e) {
-            System.out.println(e);
+            e.printStackTrace();
             //Strange exception that can't let app be running
             //TODO
         }
     }
 
-    private void removePipelines(long id) {
+
+    /**
+     * writes data to channel avoiding pipeline
+     */
+    public void writeToChannel(ByteBuffer buffer, long id) throws IOException {
+        idMap.get(id).write(buffer);
+    }
+
+    /**
+     * As the selector has no synchronization
+     */
+    private void handleQueue() {
+        while (!taskQueue.isEmpty()) {
+            taskQueue.remove().run();
+        }
+    }
+
+    public void removePeer(long id) {
+        SocketChannel socketChannel = idMap.remove(id);
+        socketChannel.keyFor(selector).cancel();
+    }
+
+    public void removePipelines(long id) {
         incomingPipelineController.removePipeline(id);
         outgoingPipelineController.removePipeline(id);
     }
 
     private void read(SocketChannel socketChannel, long id) throws IOException {
         buffer.clear();
-        int read = socketChannel.read(buffer);
+        socketChannel.read(buffer);
         buffer.flip();
         incomingPipelineController.send(buffer, id);
     }
 
     private void accept(SocketChannel socketChannel) throws IOException {
         long id = addPeerToPipeline();
-        peerManager.addPeer(id);
+        queueHandler.addTask(taskBuilder.getPeerCreationRequest(id));
         socketChannel.configureBlocking(false);
         socketChannel.register(selector, SelectionKey.OP_READ, id);
+        idMap.put(id, socketChannel);
     }
 
     private long getNextId() {
@@ -123,20 +149,21 @@ public class ConnectionHandler implements Runnable {
         return idCounter;
     }
 
-
     /**
      * @return peer id
      */
     public long addPeerToPipeline() throws IOException {
         try {
             long id = getNextId();
-            PipelineImpl pipeline = new PipelineImpl();
+            Pipeline pipeline = new PipelineImpl();
             MessageAssemblerAgent agent = new MessageAssemblerAgent(pipeline, HANDSHAKE_SIZE);
             pipeline.addAgent(agent)
                     .addAgent(new HandshakeLoggingAgent())
                     .addAgent(new HandshakeAgent(queueHandler, taskBuilder, infoHash, incomingPipelineController, agent));
             incomingPipelineController.addPipeline(pipeline, id);
-            outgoingPipelineController.addPipeline(new PipelineImpl(), id);
+            Pipeline outPipeline = new PipelineImpl();
+            outPipeline.addAgent(new SendAgent(this, id, taskBuilder, queueHandler));
+            outgoingPipelineController.addPipeline(outPipeline, id);
             return id;
         } catch (PipelineCreationException e) {
             throw new IOException(e);
@@ -145,5 +172,16 @@ public class ConnectionHandler implements Runnable {
 
     public void connectToPeer(SocketAddress socketAddress) throws IOException {
         SocketChannel socketChannel = SocketChannel.open(socketAddress);
+        accept(socketChannel);
+    }
+
+    /**
+     * Uses to send data through outgoing pipeline
+     *  @implNote  Can be used only by queue handler to avoid deadlock
+     */
+    @Override
+    public void sendMessage(byte[] message, long peerId) {
+        ByteBuffer buffer = ByteBuffer.wrap(message);
+        outgoingPipelineController.send(buffer, peerId);
     }
 }

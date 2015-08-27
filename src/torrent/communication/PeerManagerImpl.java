@@ -9,7 +9,7 @@ import java.util.Map;
 public class PeerManagerImpl implements PeerManager {
     //TODO synchronization???
     Map<Long, Peer> idPeerMap = new HashMap<>();
-    Map<ByteBuffer, Long> nameMap = new HashMap<>();
+    Map<byte[], Long> nameMap = new HashMap<>();
 
     @Override
     public Peer getPeer(long id) {
@@ -28,7 +28,7 @@ public class PeerManagerImpl implements PeerManager {
 
     //TODO synchronization????
     @Override
-    public void registerPeer(long id, ByteBuffer name) {
+    public void registerPeer(long id, byte[] name) {
         Peer peer = idPeerMap.get(id);
         if (peer == null) {
             //TODO
@@ -46,9 +46,6 @@ public class PeerManagerImpl implements PeerManager {
 
     @Override
     public boolean hasPeer(long id) {
-        if (idPeerMap.containsKey(id)) {
-            return true;
-        }
-        return false;
+        return idPeerMap.containsKey(id);
     }
 }

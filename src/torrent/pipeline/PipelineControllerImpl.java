@@ -1,6 +1,5 @@
 package torrent.pipeline;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,9 +7,9 @@ public class PipelineControllerImpl implements PipelineController {
     private final Map<Long, Pipeline> pipelineMap = new HashMap<>();
 
     @Override
-    public void send(Object data, long pipelineId)  {
+    public void send(Object data, long pipelineId) {
         Pipeline pipeline = pipelineMap.get(pipelineId);
-        if(pipeline == null) {
+        if (pipeline == null) {
             throw new WrongPipelineIdException(pipelineId);
         }
 
@@ -34,6 +33,7 @@ public class PipelineControllerImpl implements PipelineController {
 
     @Override
     public void replacePipeline(Pipeline pipeline, long pipelineId) {
+        pipeline.setId(pipelineId);
         pipelineMap.put(pipelineId, pipeline);
     }
 }

@@ -1,13 +1,15 @@
 package torrent.communication;
 
+import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 
-public class CommunicationService implements SendService, CommunicationController {
+public class CommunicationService implements CommunicationController {
+    private final ConnectionHandler connectionHandler;
 
-    @Override
-    public void sendMessage(byte[] message, ByteBuffer peerId) {
-
+    public CommunicationService(ConnectionHandler connectionHandler) {
+        this.connectionHandler = connectionHandler;
     }
 
 
@@ -15,13 +17,16 @@ public class CommunicationService implements SendService, CommunicationControlle
      * @implNote To avoid deadlock it must be used only by queue handler thread
      */
     @Override
-    public void addNewPeer(InetAddress address) {
-
+    public void addNewPeer(InetSocketAddress address) throws IOException {
+        connectionHandler.connectToPeer(address);
     }
 
+    /**
+     * @implNote To avoid deadlock it must be used only by queue handler thread
+     */
     @Override
     public void deletePeer(long peerId) {
-
+        connectionHandler.addTask(new PeerDeletionTask(peerId, connectionHandler));
     }
 
 

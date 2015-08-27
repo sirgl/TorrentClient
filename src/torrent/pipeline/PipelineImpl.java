@@ -5,14 +5,14 @@ import torrent.pipeline.agents.Agent;
 import java.util.*;
 
 public class PipelineImpl implements Pipeline {
-    private final List<AgentContext> contexts = new ArrayList<>();
+    private final List<PipelineContext> contexts = new ArrayList<>();
 
     private boolean idAssigned = false;
     private long id;
 
     @Override
     public Pipeline addAgent(Agent agent) {
-        contexts.add(new AgentContext(this, contexts.size(), agent));
+        contexts.add(new PipelineContext(this, contexts.size(), agent));
         return this;
     }
 
@@ -37,8 +37,8 @@ public class PipelineImpl implements Pipeline {
     @Override
     public void sendToIndex(Object data, int index) {
         if(index >= 0 && index < contexts.size()) {
-            AgentContext agentContext = contexts.get(index);
-            agentContext.getAgent().handle(agentContext, data);
+            PipelineContext pipelineContext = contexts.get(index);
+            pipelineContext.getAgent().handle(pipelineContext, data);
         }
     }
 }

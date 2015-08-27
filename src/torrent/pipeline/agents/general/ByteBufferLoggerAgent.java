@@ -1,6 +1,6 @@
 package torrent.pipeline.agents.general;
 
-import torrent.pipeline.AgentContext;
+import torrent.pipeline.PipelineContext;
 import torrent.pipeline.Pipeline;
 import torrent.pipeline.agents.Agent;
 
@@ -21,7 +21,7 @@ public class ByteBufferLoggerAgent implements Agent {
      * @param data buffer that must be flipped(pos = 0, limit at the end of data)
      */
     @Override
-    public void handle(AgentContext context, Object data) {
+    public void handle(PipelineContext context, Object data) {
         ByteBuffer buffer = (ByteBuffer) data;
         System.out.println("Buffer " + buffer.limit() + "/" + buffer.capacity());
         System.out.print("|");

@@ -1,12 +1,10 @@
 package torrent.pipeline.agents.pwm;
 
-import torrent.pipeline.AgentContext;
+import torrent.pipeline.PipelineContext;
 import torrent.pipeline.Pipeline;
 import torrent.pipeline.agents.Agent;
 
 import java.nio.ByteBuffer;
-
-import static torrent.tools.transferAsMuchAsPossible;
 
 /**
  * Agent for assembling peer wire protocol(PWP) messages.
@@ -54,7 +52,7 @@ public class MessageAssemblerAgent implements Agent {
      * @param data must be flipped buffer that contains part of PWP message
      */
     @Override
-    public void handle(AgentContext context, Object data) {
+    public void handle(PipelineContext context, Object data) {
         buffer = (ByteBuffer) data;
         while(buffer.hasRemaining() && !stopped) {
             if (size == 0) {

@@ -1,6 +1,6 @@
 package torrent.pipeline.agents.general;
 
-import torrent.pipeline.AgentContext;
+import torrent.pipeline.PipelineContext;
 import torrent.pipeline.agents.Agent;
 
 public class OutputAgent implements Agent {
@@ -11,7 +11,7 @@ public class OutputAgent implements Agent {
     }
 
     @Override
-    public void handle(AgentContext context, Object data) {
+    public void handle(PipelineContext context, Object data) {
         result = data;
         context.sendNext(data);
     }
