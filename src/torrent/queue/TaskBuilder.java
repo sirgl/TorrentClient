@@ -12,4 +12,8 @@ public interface TaskBuilder {
     PeerCreationRequest getPeerCreationRequest(long id);
 
     MessageSendRequest getMessageSendRequest(long id, byte[] message);
+
+    HaveMessageHandleRequest getHaveMessageHandleRequest(long sourcePeerId, int pieceNumber);
+
+    BitfieldMessageHandleRequest getBitfieldMessageHandleRequest(long sourcePeerId, byte[] bitfield);
 }

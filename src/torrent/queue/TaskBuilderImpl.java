@@ -47,4 +47,14 @@ public class TaskBuilderImpl implements TaskBuilder {
     public MessageSendRequest getMessageSendRequest(long id, byte[] message) {
         return new MessageSendRequest(sendService, message, id);
     }
+
+    @Override
+    public HaveMessageHandleRequest getHaveMessageHandleRequest(long sourcePeerId, int pieceNumber) {
+        return new HaveMessageHandleRequest(sourcePeerId, pieceNumber, peerManager);
+    }
+
+    @Override
+    public BitfieldMessageHandleRequest getBitfieldMessageHandleRequest(long sourcePeerId, byte[] bitfield) {
+        return new BitfieldMessageHandleRequest(bitfield, sourcePeerId, peerManager);
+    }
 }
